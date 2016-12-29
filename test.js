@@ -28,7 +28,7 @@ describe('microservice-chain-logger', () => {
     it('mutates opts and initial req.headers when assigning', () => {
       const req = {headers: {}, method: 'GET'};
       const opts = {uri: 'some'};
-      lib.assignCorrelationId(opts, req);
+      lib.assignCorrelationId(req, opts);
       expect(opts.headers['X-Correlation-ID'].length).toBe(36);
       expect(req.headers['x-correlation-id'].length).toBe(36);
     });
@@ -55,7 +55,7 @@ describe('microservice-chain-logger', () => {
         const data = JSON.parse(jsonContent);
         expect(data.message).toBe('hello from an exception');
         expect(data.line).toBeDefined();
-        expect(data.col).toBeDefined();
+        expect(data.column).toBeDefined();
         expect(data.file).toBeDefined();
         done();
       });
@@ -68,7 +68,7 @@ describe('microservice-chain-logger', () => {
         const data = JSON.parse(jsonContent);
         expect(data.message).toBe('baz bar');
         expect(data.line).toBeDefined();
-        expect(data.col).toBeDefined();
+        expect(data.column).toBeDefined();
         expect(data.file).toBeDefined();
         done();
       });
@@ -144,10 +144,29 @@ describe('microservice-chain-logger', () => {
     it('is possible', () => {
       spyOn(stub, 'info');
       const originalTransformer = lib.transformEntry;
-      lib.transformEntry = entry => entry.message + '!';
+      lib.transformEntry = (func, entry) => entry.message + '!';
       lib.info('hello');
       lib.transformEntry = originalTransformer;
       expect(stub.info).toHaveBeenCalledWith('hello!');
+    });
+
+    it('can be used for filtering', () => {
+      spyOn(stub, 'info');
+      spyOn(stub, 'error');
+      const originalTransformer = lib.transformEntry;
+      function filter(func, entry) {
+        if (func === stub.info) {
+          return;
+        }
+        return originalTransformer(func, entry);
+      }
+
+      lib.transformEntry = filter;
+      lib.info('hello');
+      lib.error('hello');
+      lib.transformEntry = originalTransformer;
+      expect(stub.info).not.toHaveBeenCalled();
+      expect(stub.error).toHaveBeenCalled();
     });
   });
 });

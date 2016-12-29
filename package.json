@@ -13,10 +13,18 @@
     "on-finished": "^2.3.0",
     "uuid": "^3.0.1"
   },
+  "keywords": [
+    "logging",
+    "json",
+    "correlation",
+    "access log",
+    "express"
+  ],
   "engines": {
     "node": ">=6.0.0"
   },
   "devDependencies": {
+    "coveralls": "^2.11.15",
     "eslint": "^3.12.2",
     "express": "^4.14.0",
     "istanbul": "^0.4.5",

@@ -11,6 +11,7 @@ module.exports = {
   assignCorrelationId,
 
   transformEntry: defaultTransformer,
+  makeEntry,
 
   info,
   error,
@@ -22,8 +23,9 @@ module.exports = {
   initAccessLog
 };
 
-function defaultTransformer(entry) {
+function defaultTransformer(func, entry) {
   entry.taskId = process.env.MESOS_TASK_ID;
+  delete entry.isAccessLog;
   return JSON.stringify(entry);
 }
 
@@ -32,11 +34,11 @@ function getCorrelationId(req) {
 }
 
 /**
- * @param {Object} opts - options for reqeust http client
  * @param {Object} req - express Request
+ * @param {Object} opts - options for reqeust http client
  * @return {Object} - mutated option for request
  */
-function assignCorrelationId(opts, req) {
+function assignCorrelationId(req, opts) {
   opts.headers = opts.headers || {};
   opts.headers['X-Correlation-ID'] = getCorrelationId(req);
   req.headers['x-correlation-id'] = opts.headers['X-Correlation-ID'];
@@ -59,7 +61,7 @@ function stacklineToObject(line) {
   return {
     file: data[2],
     line: data[3],
-    col: data[4]
+    column: data[4]
   };
 }
 
@@ -73,13 +75,20 @@ function isExpressReq(req) {
 }
 
 function makeOutputObject(req, ...messages) {
-  const result = {};
   if (isExpressReq(req)) {
+    return module.exports.makeEntry(req, ...messages);
+  } else {
+    messages.unshift(req);
+    return module.exports.makeEntry(null, ...messages);
+  }
+}
+
+function makeEntry(req, ...messages) {
+  const result = {};
+  if (req) {
     if (req.headers['x-correlation-id']) {
       result.correlationId = req.headers['x-correlation-id'];
     }
-  } else {
-    messages.unshift(req);
   }
 
   // parse and transform exceptions
@@ -95,18 +104,25 @@ function makeOutputObject(req, ...messages) {
   return Object.assign(result, getDefaultData(...messages));
 }
 
+function applyLogFunction(func, entry) {
+  const transformed = module.exports.transformEntry(func, entry);
+  if (transformed !== undefined) {
+    func(transformed);
+  }
+}
+
 function getOutput (func, req, ...messages) {
   const output = makeOutputObject(req, ...messages);
-  func(module.exports.transformEntry(output));
+  applyLogFunction(func, output);
 }
 
 /**
- * info a message with a refernece to the file, line, col
+ * emit an info message with a refernece to the file, line, column
  */
 function infoSource(req, ...messages) {
   const output = makeOutputObject(req, ...messages);
   Object.assign(output, getCodeAnchor());
-  console.info(module.exports.transformEntry(output));
+  applyLogFunction(console.info, output);
 }
 
 function info (req, ...messages) {
@@ -131,7 +147,9 @@ function initAccessLog() {
       const path = url.parse(req.originalUrl).pathname;
       const user = basicAuth(req);
       const userName = user ? user.name : '-';
-      info(req, userName, res.statusCode, req.method, path);
+      const output = makeOutputObject(req, userName, res.statusCode, req.method, path);
+      output.isAccessLog = true;
+      applyLogFunction(console.info, output);
     });
     next();
   };

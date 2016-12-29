@@ -169,7 +169,7 @@ logger.makeEntry = (req, ...messages) => {
 
 See more advanced examples on github:
 
-* [tranformEntry()](https://github.com/jochen-schweizer/microservice-chain-logger/blob/master/examples/tranformEntry.js)
+* [tranformEntry()](https://github.com/jochen-schweizer/microservice-chain-logger/blob/master/examples/transformEntry.js)
 * [correlation id and makeEntry()](https://github.com/jochen-schweizer/microservice-chain-logger/blob/master/examples/correlation.js)
 
 ## License

@@ -1,0 +1,6 @@
+test.js
+Makefile
+.gitignore
+.travis.yml
+.eslintrc
+coverage

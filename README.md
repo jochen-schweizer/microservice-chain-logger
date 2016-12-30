@@ -189,8 +189,8 @@ Here is a sample of how you can replace the standard **morgan** access log just 
   "middleware": {
     "logger": {
       "route": "/((?!metrics|status|favico.ico|robots.txt))*",
+      "priority": 0,
       "module": {
-        "priority": 0,
         "name": "microservice-chain-logger",
         "method": "initAccessLog",
         "arguments": [

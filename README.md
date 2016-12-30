@@ -190,6 +190,7 @@ Here is a sample of how you can replace the standard **morgan** access log just 
     "logger": {
       "route": "/((?!metrics|status|favico.ico|robots.txt))*",
       "module": {
+        "priority": 0,
         "name": "microservice-chain-logger",
         "method": "initAccessLog",
         "arguments": [

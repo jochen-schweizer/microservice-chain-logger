@@ -102,10 +102,9 @@ function.
 
 ```javascript
 // init access log and replace transformEntry,
-// so that it produces text logs instead of JSON
-// (this is useful in development)
+// so that it produces text logs instead of JSON when in dev. mode
 app.use(logger.initAccessLog({
-  useTextTransformer: true
+  useTextTransformer: process.env.NODE_ENV === 'development'
 }));
 ```
 

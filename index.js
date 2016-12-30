@@ -43,6 +43,9 @@ function textTransformer(func, entry) {
 }
 
 function getCorrelationId(req) {
+  if (!req || !req.headers) {
+    throw new Error('req.headers missing while trying to read correlationId');
+  }
   return req.headers['x-correlation-id'] || uuid.v4();
 }
 
@@ -52,6 +55,16 @@ function getCorrelationId(req) {
  * @return {Object} - mutated option for request
  */
 function assignCorrelationId(req, opts) {
+  // if opts is a string, then it's probably an URI for request('http://example.com', ...)
+  if (typeof opts === 'string') {
+    opts = {uri : opts};
+  }
+  if (!opts) {
+    throw new Error('trying to assign correlationId to empty opts');
+  }
+  if (!req || !req.headers) {
+    throw new Error('req.headers missing. Calling assignCorrelationId on not an express Request?');
+  }
   opts.headers = opts.headers || {};
   opts.headers['X-Correlation-ID'] = getCorrelationId(req);
   req.headers['x-correlation-id'] = opts.headers['X-Correlation-ID'];

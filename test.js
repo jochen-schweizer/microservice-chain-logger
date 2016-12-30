@@ -13,24 +13,51 @@ const supertest = require('supertest');
 
 describe('microservice-chain-logger', () => {
   describe('correlation id', () => {
-    it('reads correlationId from header', () => {
-      const req = {headers: {'x-correlation-id': '54321'}, method: 'GET'};
-      const correlationId = lib.getCorrelationId(req);
-      expect(correlationId).toBe('54321');
+    describe('assignCorrelationId()', () => {
+      it('reads correlationId from header', () => {
+        const req = {headers: {'x-correlation-id': '54321'}, method: 'GET'};
+        const correlationId = lib.getCorrelationId(req);
+        expect(correlationId).toBe('54321');
+      });
+
+      it('throws on bad req', () => {
+        expect(() => lib.getCorrelationId('bad')).toThrow();
+      });
     });
 
-    it('creates new correlationId', () => {
-      const req = {headers: {}, method: 'GET'};
-      const correlationId = lib.getCorrelationId(req);
-      expect(correlationId.length).toBe(36);
-    });
 
-    it('mutates opts and initial req.headers when assigning', () => {
-      const req = {headers: {}, method: 'GET'};
-      const opts = {uri: 'some'};
-      lib.assignCorrelationId(req, opts);
-      expect(opts.headers['X-Correlation-ID'].length).toBe(36);
-      expect(req.headers['x-correlation-id'].length).toBe(36);
+    describe('assignCorrelationId()', () => {
+      it('creates new correlationId', () => {
+        const req = {headers: {}, method: 'GET'};
+        const correlationId = lib.getCorrelationId(req);
+        expect(correlationId.length).toBe(36);
+      });
+
+      it('mutates opts and initial req.headers when assigning', () => {
+        const req = {headers: {}, method: 'GET'};
+        const opts = {uri: 'some'};
+        lib.assignCorrelationId(req, opts);
+        expect(opts.headers['X-Correlation-ID'].length).toBe(36);
+        expect(req.headers['x-correlation-id'].length).toBe(36);
+      });
+
+      it('accepts string opts', () => {
+        const req = {headers: {'x-correlation-id': 'zzz'}, method: 'GET'};
+        const opts = lib.assignCorrelationId(req, 'http://example.com');
+        expect(opts.headers['X-Correlation-ID']).toBe('zzz');
+      });
+
+      it('throws on bad req', () => {
+        expect(() => {
+          lib.assignCorrelationId(null, {});
+        }).toThrow();
+      });
+
+      it('throws on empty opts', () => {
+        expect(() => {
+          lib.assignCorrelationId({headers: {}}, null);
+        }).toThrow();
+      });
     });
   });
 

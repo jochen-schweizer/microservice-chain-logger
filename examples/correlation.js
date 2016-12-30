@@ -14,7 +14,7 @@ logger.makeEntry = (req, ...messages) => {
 };
 
 // when developping, we want to see clean logs in the console
-// with no meta-data and other noice
+// with no meta-data and other noise
 if (process.env.NODE_ENV === 'development') {
   logger.transformEntry = (func, entry) => entry.message;
 }

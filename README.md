@@ -72,7 +72,9 @@ app.get('/some/route', (req, res) => {
   logger.info(req, 'message with meta data', {from: 'the req'});
 });
 ```
-### logger.initAccessLog()
+### logger.initAccessLog(opts)
+
+* **opts** - `Object` or `undefined`
 
 The access log can be used as a replacement for `morgan` module,
 keepig all of the logs in a consistent format and implicitly providing `correlationId` for each request.
@@ -87,11 +89,24 @@ You can use this flag for special logic for messages coming from access log.
 app.get('/status', (req, res) => res.send('healthy'));
 
 // register access log middleware
-app.get(logger.initAccessLog());
+app.use(logger.initAccessLog());
 
 app.get('/', (req, res) => {
   res.send('requests to this and further routes will be logged');
 });
+```
+
+An only supported option
+is **useTextTransformer**, which is a shortcut for replacing **transformEntry**
+function.
+
+```javascript
+// init access log and replace transformEntry,
+// so that it produces text logs instead of JSON
+// (this is useful in development)
+app.use(logger.initAccessLog({
+  useTextTransformer: true
+}));
 ```
 
 ### logger.getCorrelationId(req)
@@ -165,6 +180,31 @@ logger.makeEntry = (req, ...messages) => {
   return result;
 };
 ```
+## using together with kraken.js
+
+Here is a sample how you can replace standard **morgan** access log just by changing config:
+
+```json
+{
+  "middleware": {
+    "logger": {
+      "route": "/((?!metrics|status|favico.ico|robots.txt))*",
+      "module": {
+        "name": "microservice-chain-logger",
+        "method": "initAccessLog",
+        "arguments": [
+          {
+            "useTextTransformer": true
+          }
+        ]
+      }
+    }
+  }
+}
+```
+... you may want to move the `argumetns` part to `development.json`,
+so that in production you get JSON.
+
 ### More examles
 
 See more advanced examples on github:

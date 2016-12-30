@@ -1,6 +1,6 @@
 {
   "name": "microservice-chain-logger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JSON logger for microservices with bundled Correlation ID and http-server access logging",
   "main": "index.js",
   "scripts": {
@@ -31,5 +31,9 @@
     "jasme": "^5.2.0",
     "rewire": "^2.5.2",
     "supertest": "^2.0.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jochen-schweizer/microservice-chain-logger.git"
   }
 }

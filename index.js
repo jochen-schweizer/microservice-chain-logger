@@ -10,7 +10,8 @@ module.exports = {
   getCorrelationId,
   assignCorrelationId,
 
-  transformEntry: defaultTransformer,
+  textTransformer,
+  transformEntry,
   makeEntry,
 
   info,
@@ -23,10 +24,22 @@ module.exports = {
   initAccessLog
 };
 
-function defaultTransformer(func, entry) {
+function transformEntry(func, entry) {
   entry.taskId = process.env.MESOS_TASK_ID;
   delete entry.isAccessLog;
   return JSON.stringify(entry);
+}
+
+function textTransformer(func, entry) {
+  let result = entry.processTime;
+  if (func === console.error) {
+    result += ' ERR:';
+  }
+  result += ' ' + entry.message;
+  if (entry.correlationId) {
+    result += ` (c:${entry.correlationId})`;
+  }
+  return result;
 }
 
 function getCorrelationId(req) {
@@ -141,7 +154,11 @@ function warn (req, ...messages) {
   getOutput(console.warn, req, ...messages);
 }
 
-function initAccessLog() {
+function initAccessLog(opts) {
+  opts = opts || {};
+  if (opts.useTextTransformer) {
+    module.exports.transformEntry = module.exports.textTransformer;
+  }
   return function(req, res, next) {
     onFinished(res, () => {
       const path = url.parse(req.originalUrl).pathname;

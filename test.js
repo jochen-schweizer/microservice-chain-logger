@@ -120,18 +120,19 @@ describe('microservice-chain-logger', () => {
         .end(() => {});
     });
 
-    it('can be used from error handler', done => {
+    it('can be initialized with textTransformer', done => {
       const app = express();
-      app.use(lib.initAccessLog());
+      app.use(lib.initAccessLog({
+        useTextTransformer: true
+      }));
       app.get('/another', (req, res, next) => {
         next(new Error('something happened'));
       });
       app.use((err, req, res, next) => { // eslint-disable-line
         lib.error(req, err);
       });
-      spyOn(stub, 'error').and.callFake(jsonContent => {
-        const data = JSON.parse(jsonContent);
-        expect(data.message).toMatch(/something happened/);
+      spyOn(stub, 'error').and.callFake(message => {
+        expect(message).toMatch(/ERR: something happened/);
         done();
       });
       supertest(app)
@@ -167,6 +168,34 @@ describe('microservice-chain-logger', () => {
       lib.transformEntry = originalTransformer;
       expect(stub.info).not.toHaveBeenCalled();
       expect(stub.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('textTransformer()', () => {
+    it('generates text message', () => {
+      const message = lib.textTransformer(stub.info, {
+        processTime: (new Date()).toISOString(),
+        message: 'foo'
+      });
+      expect(message).toMatch(/foo/);
+      expect(message).toMatch(/Z/);
+    });
+
+    it('adds ERR prefix', () => {
+      const message = lib.textTransformer(stub.error, {
+        processTime: (new Date()).toISOString(),
+        message: 'foo'
+      });
+      expect(message).toMatch(/ERR: foo/);
+    });
+
+    it('adds correlationId suffix', () => {
+      const message = lib.textTransformer(stub.info, {
+        processTime: (new Date()).toISOString(),
+        correlationId: '12345',
+        message: 'foo'
+      });
+      expect(message).toMatch(/\(c:12345\)/);
     });
   });
 });

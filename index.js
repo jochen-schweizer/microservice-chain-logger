@@ -39,6 +39,9 @@ function textTransformer(func, entry) {
   if (entry.correlationId) {
     result += ` (c:${entry.correlationId})`;
   }
+  if (entry.stack) {
+    result += '\n' + entry.stack;
+  }
   return result;
 }
 

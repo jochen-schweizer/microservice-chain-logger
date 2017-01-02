@@ -25,7 +25,6 @@ module.exports = {
 };
 
 function transformEntry(func, entry) {
-  entry.taskId = process.env.MESOS_TASK_ID;
   delete entry.isAccessLog;
   return JSON.stringify(entry);
 }

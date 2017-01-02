@@ -13,6 +13,7 @@ module.exports = {
   textTransformer,
   transformEntry,
   makeEntry,
+  applyLogFunction,
 
   info,
   error,
@@ -141,7 +142,7 @@ function applyLogFunction(func, entry) {
 
 function getOutput (func, req, ...messages) {
   const output = makeOutputObject(req, ...messages);
-  applyLogFunction(func, output);
+  module.exports.applyLogFunction(func, output);
 }
 
 /**
@@ -150,7 +151,7 @@ function getOutput (func, req, ...messages) {
 function infoSource(req, ...messages) {
   const output = makeOutputObject(req, ...messages);
   Object.assign(output, getCodeAnchor());
-  applyLogFunction(console.info, output);
+  module.exports.applyLogFunction(console.info, output);
 }
 
 function info (req, ...messages) {
@@ -175,13 +176,15 @@ function initAccessLog(opts) {
     module.exports.transformEntry = module.exports.textTransformer;
   }
   return function(req, res, next) {
+    const startTime = Date.now();
     onFinished(res, () => {
       const path = url.parse(req.originalUrl).pathname;
       const user = basicAuth(req);
       const userName = user ? user.name : '-';
       const output = makeOutputObject(req, userName, res.statusCode, req.method, path);
       output.isAccessLog = true;
-      applyLogFunction(console.info, output);
+      output.duration = Date.now() - startTime;
+      module.exports.applyLogFunction(console.info, output);
     });
     next();
   };

@@ -52,6 +52,9 @@ app.listen(3000);
 // since it's not in a HTTP-Request context
 logger.info('call: curl http://localhost:3000/');
 ```
+Please note that the **logger** is a singleton meaning
+any changes you make to it by replacing a function would
+have immediate effect on the entire application.
 
 ## API
 
@@ -179,6 +182,32 @@ logger.makeEntry = (req, ...messages) => {
   return result;
 };
 ```
+
+### logger.applyLogFunction(func, entry)
+Params:
+
+* **func** - one of the loging functions: `console.info`, `console.warn` or `console.error`
+* **entry** - message **object**
+
+The unferlying function for `logger.info/warn/error`
+working with the logging object instead of trying to format mixed parameters
+as a single message string. It will **NOT** call `makeEntry`, so if you need
+the context just call `makeEntry` explicitly to prepare the initial **entry**.
+
+You can use it to inject specific custom fields directly from your code.
+Most likely you want to set at least **message** and **processTime**
+properties to keep it consistent with the rest of the library.
+
+```javascript
+logger.applyLogFunction(console.info, {
+  message: "balloon started",
+  color: "blue",
+  size: "medium",
+  processTime: (new Date()).toISOString()
+});
+```
+... and yes, you can replace it to match you needs just like other functions above
+
 ## using together with kraken.js
 
 Here is a sample of how you can replace the standard **morgan** access log just by changing the config:

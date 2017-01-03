@@ -262,7 +262,7 @@ Here is a sample of how you can replace the standard **morgan** access log just 
         "method": "initAccessLog",
         "arguments": [
           {
-            "useTextTransformer": true
+            "useJsonTransformer": true
           }
         ]
       }
@@ -270,8 +270,8 @@ Here is a sample of how you can replace the standard **morgan** access log just 
   }
 }
 ```
-... you may want to move the `arguments` part to `development.json`,
-so that in production you get JSON.
+... you may want to move the `arguments` part to `production.json`,
+so that in production you get JSON
 
 ### More examles
 

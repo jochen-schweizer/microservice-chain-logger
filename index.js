@@ -11,7 +11,8 @@ module.exports = {
   assignCorrelationId,
 
   textTransformer,
-  transformEntry,
+  jsonTransformer,
+  transformEntry: textTransformer,
   makeEntry,
   applyLogFunction,
 
@@ -25,7 +26,7 @@ module.exports = {
   initAccessLog
 };
 
-function transformEntry(func, entry) {
+function jsonTransformer(func, entry) {
   delete entry.isAccessLog;
   return JSON.stringify(entry);
 }
@@ -38,6 +39,12 @@ function textTransformer(func, entry) {
   result += ' ' + entry.message;
   if (entry.correlationId) {
     result += ` (c:${entry.correlationId})`;
+  }
+  if (entry.duration) {
+    result += ` (d:${entry.duration}ms)`;
+  }
+  if (!entry.stack && entry.file && entry.line && entry.column) {
+    result += ` in ${entry.file}:${entry.line}:${entry.column}`;
   }
   if (entry.stack) {
     result += '\n' + entry.stack;
@@ -172,8 +179,11 @@ function warn (req, ...messages) {
 
 function initAccessLog(opts) {
   opts = opts || {};
-  if (opts.useTextTransformer) {
-    module.exports.transformEntry = module.exports.textTransformer;
+  if (opts.useTextTransformer !== undefined && !opts.useTextTransformer) {
+    opts.useJsonTransformer = true;
+  }
+  if (opts.useJsonTransformer) {
+    module.exports.transformEntry = module.exports.jsonTransformer;
   }
   return function(req, res, next) {
     const startTime = Date.now();

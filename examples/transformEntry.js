@@ -11,7 +11,13 @@ logger.transformEntry = (func, entry) => {
   }
 
   // output logs as text instead of JSON
-  return entry.processTime + ' ' + entry.message;
+  let result = entry.processTime + ' ' + entry.message;
+
+  // allow some custom "suffix" o be added with a coma
+  if (entry.suffix) {
+    result += ` , ${entry.suffix}`;
+  }
+  return result;
 };
 
 app.use(logger.initAccessLog());
@@ -22,4 +28,8 @@ app.get('/', (req, res) => {
 });
 app.listen(3000);
 
-logger.warn('call: curl http://localhost:3000/');
+logger.applyLogFunction(console.warn, {
+  processTime: (new Date()).toISOString(),
+  message: 'call: curl http://localhost:3000/',
+  suffix: 'please'
+});

@@ -2,12 +2,13 @@
 
 # microservice chain logger
 
-JSON logger for microservices with bundled Correlation ID and http-server access logging.
+Text or JSON-formatted logger for microservices
+with bundled Correlation ID and http-server access logging.
 
 Features:
 
-* wrappers for `console.info/warn/error` producing a JSON inflated with customizable metadata
-* express access log middleware providing metadata through the same API
+* wrappers for `console.info/warn/error` producing a text or JSON inflated with customizable metadata
+* access log express middleware for providing metadata through the same API
 * reading/assigning `X-Correlation-ID` which is automatically reflected in the log messages (including access logs)
 
 All of the features are optional and you can use only the ones you need.
@@ -26,7 +27,11 @@ const app = require('express')();
 
 // this initiates firing logger.info on each request
 // with basic access log information: user, status code, method, path
-app.use(logger.initAccessLog());
+app.use(logger.initAccessLog(
+  // this (optional) setting tells that access log
+  // and ALL OTHER LOGS should use JSON format
+  useJsonTransformer: true
+));
 
 app.get('/', (req, res) => {
   // here we use req as the first parameter
@@ -82,6 +87,9 @@ app.get('/some/route', (req, res) => {
 The access log can be used as a replacement for the `morgan` module,
 keeping all of the logs in a consistent format and implicitly providing `correlationId` for each request.
 
+The request duration is automatically measured and stored
+in the **duration** field.
+
 The access log middleware adds a field `isAccessLog` to the log
 entry, which is then removed in the default `transformEntry`.
 You can use this flag for special logic for messages coming from access log.
@@ -100,14 +108,14 @@ app.get('/', (req, res) => {
 ```
 
 The only supported option
-is **useTextTransformer**, which is a shortcut for replacing **transformEntry**
-function.
+is **useJsonTransformer**, which is a shortcut for replacing
+**transformEntry** with **jsonTransformer** function.
 
 ```javascript
 // init access log and replace transformEntry,
 // so that it produces text logs instead of JSON when in dev. mode
 app.use(logger.initAccessLog({
-  useTextTransformer: process.env.NODE_ENV === 'development'
+  useJsonTransformer: process.env.NODE_ENV === 'production'
 }));
 ```
 
@@ -135,6 +143,11 @@ app.get('/', (req, res) => {
 });
 ```
 
+## Hacking API
+
+For most of the cases you should be fine with functions above,
+but feel free to hack the library at your on risk.
+
 ### logger.transformEntry(func, entry)
 
 Params:
@@ -144,10 +157,23 @@ Params:
 
 Returns `String` or `undefined`.
 
+Returning `undefined` skips the current message.
+
 Replacing this function allows customizing the log format
-and log filtering. By default JSON transformer is used.
+and log filtering. By default a text transformer is used (**logger.textTransformer**).
+The text transformer supports displaying the following fields:
+
+ * processTime
+ * message
+ * stack
+ * file, line, column
+ * duration
 
 ```javascript
+// switch to JSON transformer instead
+logger.transformEntry = loger.jsonTransformer;
+
+// custom text transformer
 logger.transformEntry = (func, entry) => {
   // suppress info logging, but keep access logs
   if (!entry.isAccessLog && func === console.info) {
@@ -208,7 +234,7 @@ logger.applyLogFunction(console.info, {
 ```
 ... and yes, you can replace it to match you needs just like other functions above
 
-## using together with kraken.js
+## Using together with kraken.js
 
 Here is a sample of how you can replace the standard **morgan** access log just by changing the config:
 

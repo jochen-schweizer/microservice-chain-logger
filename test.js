@@ -77,7 +77,17 @@ describe('microservice-chain-logger', () => {
       expect(stub.warn).toHaveBeenCalledTimes(1);
     });
 
+    it('sets stack and code anchor for exceptions', done => {
+      spyOn(stub, 'error').and.callFake(message => {
+        expect(stub.error).toHaveBeenCalledTimes(1);
+        expect(message).toMatch(/test.js/m);
+        done();
+      });
+      lib.error('some error', new Error('happened'));
+    });
+
     it('exception set code anchor', done => {
+      spyOn(lib, 'transformEntry').and.callFake(lib.jsonTransformer);
       spyOn(stub, 'info').and.callFake(jsonContent => {
         const data = JSON.parse(jsonContent);
         expect(data.message).toBe('hello from an exception');
@@ -91,18 +101,16 @@ describe('microservice-chain-logger', () => {
     });
 
     it('infoSource provides code position', done => {
-      spyOn(stub, 'info').and.callFake(jsonContent => {
-        const data = JSON.parse(jsonContent);
-        expect(data.message).toBe('baz bar');
-        expect(data.line).toBeDefined();
-        expect(data.column).toBeDefined();
-        expect(data.file).toBeDefined();
+      spyOn(stub, 'info').and.callFake(message => {
+        expect(message).toMatch(/baz bar/);
+        expect(message).toMatch(/in.*test.js:\d+:\d+/);
         done();
       });
       lib.infoSource('baz', 'bar');
     });
 
     it('reads correlationId when req is provided', done => {
+      spyOn(lib, 'transformEntry').and.callFake(lib.jsonTransformer);
       spyOn(stub, 'info').and.callFake(jsonContent => {
         const data = JSON.parse(jsonContent);
         expect(data.message).toBe('hello');
@@ -119,9 +127,8 @@ describe('microservice-chain-logger', () => {
       const app = express();
       app.use(lib.initAccessLog());
       app.get('/another', (req, res) => res.sendStatus(200));
-      spyOn(stub, 'info').and.callFake(jsonContent => {
-        const data = JSON.parse(jsonContent);
-        expect(data.message).toMatch(/\-/);
+      spyOn(stub, 'info').and.callFake(message => {
+        expect(message).toMatch(/\-/);
         done();
       });
       supertest(app)
@@ -134,11 +141,9 @@ describe('microservice-chain-logger', () => {
       const app = express();
       app.use(lib.initAccessLog());
       app.get('/', (req, res) => res.sendStatus(403));
-      spyOn(stub, 'info').and.callFake(jsonContent => {
-        const data = JSON.parse(jsonContent);
-        expect(data.processTime).toBeDefined();
-        expect(data.message).toMatch(/403/);
-        expect(data.message).toMatch(/foo/);
+      spyOn(stub, 'info').and.callFake(message => {
+        expect(message).toMatch(/403/);
+        expect(message).toMatch(/foo/);
         done();
       });
       supertest(app)
@@ -147,10 +152,11 @@ describe('microservice-chain-logger', () => {
         .end(() => {});
     });
 
-    it('can be initialized with textTransformer', done => {
+    it('can be initialized with jsonTransformer', done => {
       const app = express();
+      const original = lib.transformEntry;
       app.use(lib.initAccessLog({
-        useTextTransformer: true
+        useTextTransformer: false
       }));
       app.get('/another', (req, res, next) => {
         next(new Error('something happened'));
@@ -158,8 +164,10 @@ describe('microservice-chain-logger', () => {
       app.use((err, req, res, next) => { // eslint-disable-line
         lib.error(req, err);
       });
-      spyOn(stub, 'error').and.callFake(message => {
-        expect(message).toMatch(/ERR: something happened/);
+      spyOn(stub, 'error').and.callFake(jsonContent => {
+        const data = JSON.parse(jsonContent);
+        expect(data.message).toMatch(/something happened/);
+        lib.transformEntry = original;
         done();
       });
       supertest(app)

@@ -5,11 +5,16 @@ const app = require('express')();
 app.use(logger.initAccessLog());
 
 app.get('/', (req, res) => {
-  // here we use req as first parameter
+  // Here we use req as first parameter
   // making it possible to recognize X-Correlation-ID
-  // the object req itself will NOT be logged
-  logger.info(req, 'root called with headers', req.headers);
+  // The object req itself will NOT be logged.
+  // Also because it's infoSource we should also see file in the log.
+  logger.infoSource(req, 'root called with headers', req.headers);
   res.send('Hello World');
+});
+
+app.get('/error', (req, res) => {
+  throw new Error('artifial error');
 });
 
 // sample express error handler

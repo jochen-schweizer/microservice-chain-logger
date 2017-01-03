@@ -63,7 +63,7 @@ have immediate effect on the entire application.
 
 ## API
 
-### logger.info(), logger.warn(), logger.error()
+### logger.info(), logger.warn(), logger.error(), logger.info()
 
 These functions correspond to `console` but also add metadata,
 e.g. `processTime`, `correlationId` and any other data you inject
@@ -80,6 +80,19 @@ app.get('/some/route', (req, res) => {
   logger.info(req, 'message with meta data', {from: 'the req'});
 });
 ```
+
+Not **logger.info()** uses the same **console.info()** just like **logger.info()**
+
+### logger.infoSource()
+
+Same as **logger.info()** but adds **file**, **line** and **column** fields referencing
+the code location where it was called
+
+```javascript
+// outputs "reached this point! in my_file.js:10:2"
+logger.infoSource('reached this point!');
+```
+
 ### logger.initAccessLog(opts)
 
 * **opts** - `Object` or `undefined`

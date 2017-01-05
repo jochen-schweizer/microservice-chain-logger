@@ -8,7 +8,7 @@ with bundled Correlation ID and http-server access logging.
 Features:
 
 * wrappers for `console.info/warn/error` producing a text or JSON inflated with customizable metadata
-* access log express middleware for providing metadata through the same API
+* access log express middleware with additional metadata provided with the same API
 * reading/assigning `X-Correlation-ID` which is automatically reflected in the log messages (including access logs)
 
 All of the features are optional and you can use only the ones you need.
@@ -81,7 +81,7 @@ app.get('/some/route', (req, res) => {
 });
 ```
 
-Not **logger.info()** uses the same **console.info()** just like **logger.info()**
+Note: **logger.debug()** uses the same **console.info()** just like **logger.info()**
 
 ### logger.infoSource()
 
@@ -103,10 +103,6 @@ keeping all of the logs in a consistent format and implicitly providing `correla
 The request duration is automatically measured and stored
 in the **duration** field.
 
-The access log middleware adds a field `isAccessLog` to the log
-entry, which is then removed in the default `transformEntry`.
-You can use this flag for special logic for messages coming from access log.
-
 ```javascript
 // access log will not be triggered for /status
 // because it comes BEFORE acess log middleware
@@ -125,12 +121,16 @@ is **useJsonTransformer**, which is a shortcut for replacing
 **transformEntry** with **jsonTransformer** function.
 
 ```javascript
-// init access log and replace transformEntry,
-// so that it produces text logs instead of JSON when in dev. mode
+// init access log and replace transformEntry
+// so that it produces JSON when in production environment
 app.use(logger.initAccessLog({
   useJsonTransformer: process.env.NODE_ENV === 'production'
 }));
 ```
+
+The access log middleware adds a field `isAccessLog` to the log
+entry, which is then removed in the default `transformEntry`.
+You can use this flag for special logic for messages coming from access log.
 
 ### logger.getCorrelationId(req)
 
@@ -158,7 +158,7 @@ app.get('/', (req, res) => {
 
 ## Hacking API
 
-For most of the cases you should be fine with functions above,
+For the most of the cases you should be fine with the functions above,
 but feel free to hack the library at your on risk.
 
 ### logger.transformEntry(func, entry)
@@ -271,7 +271,7 @@ Here is a sample of how you can replace the standard **morgan** access log just 
 }
 ```
 ... you may want to move the `arguments` part to `production.json`,
-so that in production you get JSON
+so that you get JSON in production environment only.
 
 ### More examles
 

@@ -12,6 +12,8 @@ coverage:
 		./node_modules/jasme/run.js -- \
 			--output=coverage \
 			./test.js
+	@echo publish to coveralls:
+	@echo COVERALLS_REPO_TOKEN= make coveralls
 
 coveralls: coverage
 ifndef COVERALLS_REPO_TOKEN

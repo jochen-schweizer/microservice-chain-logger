@@ -1,4 +1,4 @@
-const {inspect} = require('util');
+const {format} = require('util');
 const url = require('url');
 const onFinished = require('on-finished');
 const basicAuth = require('basic-auth');
@@ -81,13 +81,9 @@ function assignCorrelationId(req, opts) {
   return opts;
 }
 
-function formatMessage(message) {
-  return typeof message == 'object' ? inspect(message) : String(message);
-}
-
 function getDefaultData(...messages) {
   return {
-    message: messages.map(formatMessage).join(' '),
+    message: format(...messages),
     processTime: (new Date()).toISOString(),
   };
 }
@@ -133,8 +129,14 @@ function makeEntry(req, ...messages) {
     if (message instanceof Error) {
       result.stack = message.stack;
       messages[i] = message.message;
+
+      // we need to calculate the shift of stack line
+      // depending on the count of lines in the message
+      // for a rare case when an exception message has linebreaks
+      const messageLines = message.message.split('\n').length;
+
       const lines = result.stack.split('\n');
-      Object.assign(result, stacklineToObject(lines[1]));
+      Object.assign(result, stacklineToObject(lines[messageLines]));
     }
   }
   return Object.assign(result, getDefaultData(...messages));

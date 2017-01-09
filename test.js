@@ -86,18 +86,18 @@ describe('microservice-chain-logger', () => {
       lib.error('some error', new Error('happened'));
     });
 
-    it('exception set code anchor', done => {
+    it('exception sets code anchor', done => {
       spyOn(lib, 'transformEntry').and.callFake(lib.jsonTransformer);
       spyOn(stub, 'info').and.callFake(jsonContent => {
         const data = JSON.parse(jsonContent);
-        expect(data.message).toBe('hello from an exception');
+        expect(data.message).toBe('hello from a\n\n\nmultiline exception');
         expect(data.line).toBeDefined();
         expect(data.column).toBeDefined();
         expect(data.file).toBeDefined();
         done();
       });
 
-      lib.info('hello', new Error('from an'), 'exception');
+      lib.info('hello', new Error('from a\n\n\nmultiline'), 'exception');
     });
 
     it('infoSource provides code position', done => {

@@ -13,11 +13,17 @@ const supertest = require('supertest');
 
 describe('microservice-chain-logger', () => {
   describe('correlation id', () => {
-    describe('assignCorrelationId()', () => {
+    describe('getCorrelationId()', () => {
       it('reads correlationId from header', () => {
         const req = {headers: {'x-correlation-id': '54321'}, method: 'GET'};
         const correlationId = lib.getCorrelationId(req);
         expect(correlationId).toBe('54321');
+      });
+
+      it('creates new correlationId', () => {
+        const req = {headers: {}, method: 'GET'};
+        const correlationId = lib.getCorrelationId(req);
+        expect(correlationId.length).toBe(36);
       });
 
       it('throws on bad req', () => {
@@ -27,10 +33,10 @@ describe('microservice-chain-logger', () => {
 
 
     describe('assignCorrelationId()', () => {
-      it('creates new correlationId', () => {
+      it('can be called without opts', () => {
         const req = {headers: {}, method: 'GET'};
-        const correlationId = lib.getCorrelationId(req);
-        expect(correlationId.length).toBe(36);
+        lib.assignCorrelationId(req);
+        expect(req.headers['x-correlation-id'].length).toBe(36);
       });
 
       it('mutates opts and initial req.headers when assigning', () => {

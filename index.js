@@ -70,15 +70,18 @@ function assignCorrelationId(req, opts) {
   if (typeof opts === 'string') {
     opts = {uri : opts};
   }
-  if (!opts) {
-    throw new Error('trying to assign correlationId to empty opts');
-  }
   if (!req || !req.headers) {
     throw new Error('req.headers missing. Calling assignCorrelationId on not an express Request?');
   }
-  opts.headers = opts.headers || {};
-  opts.headers['X-Correlation-ID'] = getCorrelationId(req);
-  return opts;
+  const correlationId =  getCorrelationId(req);
+  if (opts !== undefined) {
+    if (!opts) {
+      throw new Error('trying to assign correlationId to empty opts');
+    }
+    opts.headers = opts.headers || {};
+    opts.headers['X-Correlation-ID'] = correlationId;
+    return opts;
+  }
 }
 
 function getDefaultData(...messages) {

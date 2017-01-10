@@ -63,7 +63,7 @@ have immediate effect on the entire application.
 
 ## API
 
-### logger.info(), logger.warn(), logger.error(), logger.info()
+### logger.info(), logger.warn(), logger.error(), logger.debug()
 
 These functions correspond to `console` but also add metadata,
 e.g. `processTime`, `correlationId` and any other data you inject
@@ -143,16 +143,40 @@ app.get('/', (req, res) => {
 });
 ```
 
+Note `getCorrelationId()` also sets `X-Correlation-ID` header to current req,
+thus if called twice it will return the same ID, and if called at least
+once then the access log will already contain the correlation ID.
+
 ### logger.assignCorrelationId(req, opts)
 
 Assigns `correlationId` to `request`-compatible `opts`-object.
-If a new correlation ID was generated then it's also assigned
-to the current `req`. This ensures that it appears in all
-subsequent log messages and eventually in the access log.
+It uses `getCorrelationId()` internally meaning it has the same
+side effect on current req.
 
 ```javascript
-app.get('/', (req, res) => {
-  res.send('correlationId is ' + logger.getCorrelationId(req));
+const request = require('request');
+app.get('/', (req, res, next) => {
+  request(logger.assignCorrelationid(req, {
+    uri: 'http://some.other.service/and/path'
+  }))
+    .then(() => {
+      res.send('correlationId is ' + logger.getCorrelationId(req));
+    })
+    .catch(next);
+});
+```
+
+An alternative way when using `superagent`:
+
+```javascript
+const superagent = require('superagent');
+app.get('/', (req, res, next) => {
+  superagent
+    .get('http://some.other.service/and/path')
+    .set('X-Correlation-ID', logger.getCorrelationId(req))
+    .end(function(err, res){
+      // Do something
+    });
 });
 ```
 
@@ -184,7 +208,7 @@ The text transformer supports displaying the following fields:
 
 ```javascript
 // switch to JSON transformer instead
-logger.transformEntry = loger.jsonTransformer;
+logger.transformEntry = logger.jsonTransformer;
 
 // custom text transformer
 logger.transformEntry = (func, entry) => {

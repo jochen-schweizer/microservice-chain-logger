@@ -2,23 +2,6 @@ const logger = require('../index');
 const app = require('express')();
 const requestPromise = require('request-promise');
 
-// extend makeEntry(), so that each record also includes HTTP method
-// if it's available, i.e. if req was provided
-const origianlMakeEntry = logger.makeEntry;
-logger.makeEntry = (req, ...messages) => {
-  const result = origianlMakeEntry(req, ...messages);
-  if (req) {
-    result.method = req.method;
-  }
-  return result;
-};
-
-// when developping, we want to see clean logs in the console
-// with no meta-data and other noise
-if (process.env.NODE_ENV === 'development') {
-  logger.transformEntry = (func, entry) => entry.message;
-}
-
 app.use(logger.initAccessLog());
 
 app.get('/', (req, res, next) => {
@@ -28,9 +11,7 @@ app.get('/', (req, res, next) => {
   // assignCorrelationId() expects you to use requst-library notation
   // you can use request, request-promise, request-plus
   // ... or any other http-libraries of the same family
-  const opts = {
-    uri: 'http://localhost:3000/subquery'
-  };
+  const opts = {uri: 'http://localhost:3000/subquery'};
   logger.assignCorrelationId(req, opts);
 
   requestPromise(opts)

@@ -13,6 +13,7 @@ app.get('/', (req, res, next) => {
   // ... or any other http-libraries of the same family
   const opts = {uri: 'http://localhost:3000/subquery'};
   logger.assignCorrelationId(req, opts);
+  logger.info(req, 'for sergej');
 
   requestPromise(opts)
     .then(response => {

@@ -56,7 +56,8 @@ function getCorrelationId(req) {
   if (!req || !req.headers) {
     throw new Error('req.headers missing while trying to read correlationId');
   }
-  return req.headers['x-correlation-id'] || uuid.v4();
+  req.headers['x-correlation-id'] = req.headers['x-correlation-id'] || uuid.v4();
+  return req.headers['x-correlation-id'];
 }
 
 /**
@@ -77,7 +78,6 @@ function assignCorrelationId(req, opts) {
   }
   opts.headers = opts.headers || {};
   opts.headers['X-Correlation-ID'] = getCorrelationId(req);
-  req.headers['x-correlation-id'] = opts.headers['X-Correlation-ID'];
   return opts;
 }
 

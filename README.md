@@ -27,11 +27,11 @@ const app = require('express')();
 
 // this initiates firing logger.info on each request
 // with basic access log information: user, status code, method, path
-app.use(logger.initAccessLog(
+app.use(logger.initAccessLog({
   // this (optional) setting tells that access log
   // and ALL OTHER LOGS should use JSON format
   useJsonTransformer: true
-));
+}));
 
 app.get('/', (req, res) => {
   // here we use req as the first parameter
@@ -279,7 +279,7 @@ Here is a sample of how you can replace the standard **morgan** access log just 
 {
   "middleware": {
     "logger": {
-      "route": "/((?!metrics|status|favico.ico|robots.txt))*",
+      "route": "/((?!metrics|status|favicon.ico|robots.txt))*",
       "priority": 0,
       "module": {
         "name": "microservice-chain-logger",

@@ -198,7 +198,7 @@ function initAccessLog(opts) {
       const userName = user ? user.name : '-';
       const output = makeOutputObject(req, userName, res.statusCode, req.method, path);
       output.isAccessLog = true;
-      output.duration = Date.now() - startTime;
+      output.duration = Math.max(1, Date.now() - startTime);
       module.exports.applyLogFunction(console.info, output);
     });
     next();

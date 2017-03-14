@@ -92,6 +92,33 @@ describe('microservice-chain-logger', () => {
       lib.error('some error', new Error('happened'));
     });
 
+    it('processes unexpectedly formatted stacks', done => {
+      spyOn(lib, 'transformEntry').and.callFake(lib.jsonTransformer);
+      spyOn(stub, 'error').and.callFake(jsonContent => {
+        const data = JSON.parse(jsonContent);
+        expect(data.message).toMatch(/dummy/m);
+        done();
+      });
+      const error = new Error('dummy');
+      error.stack = 'some\ncustom\strange\nstack\ntrace';
+      lib.error(error);
+    });
+
+    it('parses stack line without brackets ', done => {
+      spyOn(lib, 'transformEntry').and.callFake(lib.jsonTransformer);
+      spyOn(stub, 'error').and.callFake(jsonContent => {
+        const data = JSON.parse(jsonContent);
+        expect(data.line).toBe(69);
+        expect(data.column).toBe(13);
+        expect(data.file).toBe('/app/some/super_file.js');
+        expect(data.message).toMatch(/dummy/m);
+        done();
+      });
+      const error = new Error('dummy');
+      error.stack = 'some\n    at /app/some/super_file.js:69:13\nwhatever';
+      lib.error(error);
+    });
+
     it('exception sets code anchor', done => {
       spyOn(lib, 'transformEntry').and.callFake(lib.jsonTransformer);
       spyOn(stub, 'info').and.callFake(jsonContent => {

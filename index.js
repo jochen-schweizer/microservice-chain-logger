@@ -4,7 +4,8 @@ const onFinished = require('on-finished');
 const basicAuth = require('basic-auth');
 const uuid = require('uuid');
 
-const stackReg = /at\s+(.*)\s+\((.*):(\d*):(\d*)\)/i;
+const stackReg = /at\s+.*\s+\((.*):(\d*):(\d*)\)$/i;
+const stackRegNoFunction = /at\s+(.*):(\d*):(\d*)$/i;
 
 module.exports = {
   getCorrelationId,
@@ -92,11 +93,14 @@ function getDefaultData(...messages) {
 }
 
 function stacklineToObject(line) {
-  const data = stackReg.exec(line);
-  return {
-    file: data[2],
-    line: data[3],
-    column: data[4]
+  let data = stackReg.exec(line);
+  if (!data) {
+    data = stackRegNoFunction.exec(line);
+  }
+  return data && {
+    file: data[1],
+    line: parseInt(data[2]),
+    column: parseInt(data[3])
   };
 }
 

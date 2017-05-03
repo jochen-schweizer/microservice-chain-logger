@@ -116,9 +116,9 @@ app.get('/', (req, res) => {
 });
 ```
 
-The only supported option
-is **useJsonTransformer**, which is a shortcut for replacing
-**transformEntry** with **jsonTransformer** function.
+Options:
+  * **useJsonTransformer** - replace default **textTransformer** with **jsonTransformer** function
+  * **maxMessageLength** - override default `maxMessageLength=8000` for **jsonTransformer**
 
 ```javascript
 // init access log and replace transformEntry

@@ -119,6 +119,29 @@ describe('microservice-chain-logger', () => {
       lib.error(error);
     });
 
+    it('clips message in jsonTransformer when too long', done => {
+      const oldMaxLength = lib.maxMessageLength;
+      lib.maxMessageLength = 7;
+      spyOn(lib, 'transformEntry').and.callFake(lib.jsonTransformer);
+      spyOn(stub, 'info').and.callFake(jsonContent => {
+        const data = JSON.parse(jsonContent);
+        expect(data.message).toBe('1234567');
+        lib.maxMessageLength = oldMaxLength;
+        done();
+      });
+      lib.info('1234567890');
+    });
+
+    it('edge case: do not clip message when message is an object', done => {
+      const oldMaxLength = lib.maxMessageLength;
+      lib.maxMessageLength = 7;
+      const jsonContent = lib.jsonTransformer(undefined, {message: {complicated: '12345689'}});
+      const data = JSON.parse(jsonContent);
+      expect(data.message).toEqual({complicated: '12345689'});
+      lib.maxMessageLength = oldMaxLength;
+      done();
+    });
+
     it('exception sets code anchor', done => {
       spyOn(lib, 'transformEntry').and.callFake(lib.jsonTransformer);
       spyOn(stub, 'info').and.callFake(jsonContent => {

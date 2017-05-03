@@ -8,6 +8,8 @@ const stackReg = /at\s+.*\s+\((.*):(\d*):(\d*)\)$/i;
 const stackRegNoFunction = /at\s+(.*):(\d*):(\d*)$/i;
 
 module.exports = {
+  maxMessageLength: 8000,
+
   getCorrelationId,
   assignCorrelationId,
 
@@ -29,6 +31,9 @@ module.exports = {
 
 function jsonTransformer(func, entry) {
   delete entry.isAccessLog;
+  if (typeof entry.message === 'string') {
+    entry.message = entry.message.substring(0, module.exports.maxMessageLength);
+  }
   return JSON.stringify(entry);
 }
 
@@ -188,6 +193,7 @@ function warn (req, ...messages) {
 
 function initAccessLog(opts) {
   opts = opts || {};
+  module.exports.maxMessageLength = opts.maxMessageLength || module.exports.maxMessageLength;
   if (opts.useTextTransformer !== undefined && !opts.useTextTransformer) {
     opts.useJsonTransformer = true;
   }

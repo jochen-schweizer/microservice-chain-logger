@@ -230,9 +230,39 @@ describe('microservice-chain-logger', () => {
         .get('/another')
         .end(() => {});
     });
+
+    it('injects logger into request', done => {
+      const app = express();
+      app.use(lib.initAccessLog({injectIntoReq: true}));
+      app.get('/', (req, res) => {
+        req.logger.error('some error');
+        res.sendStatus(200);
+      });
+      spyOn(stub, 'error').and.callFake(message => {
+        expect(message).toMatch(/some error.*the_id/);
+        spyOn(stub, 'info').and.callFake(done);
+      });
+      supertest(app)
+        .get('/')
+        .set('X-Correlation-ID', 'the_id')
+        .end(() => {});
+    });
+
+    it('automatic assignCorrelationId', done => {
+      const app = express();
+      app.use(lib.initAccessLog({assignCorrelationId: true}));
+      app.get('/', (req, res) => res.sendStatus(200));
+      spyOn(stub, 'info').and.callFake(message => {
+        expect(message).toMatch(/\(c:/);
+        done();
+      });
+      supertest(app)
+        .get('/')
+        .end(() => {});
+    });
   });
 
-  describe('repalcing transformer', () => {
+  describe('replacing transformer', () => {
     it('is possible', () => {
       spyOn(stub, 'info');
       const originalTransformer = lib.transformEntry;

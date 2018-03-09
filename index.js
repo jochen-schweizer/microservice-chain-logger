@@ -201,6 +201,12 @@ function initAccessLog(opts) {
     module.exports.transformEntry = module.exports.jsonTransformer;
   }
   return function(req, res, next) {
+    if (opts.injectIntoReq) {
+      req.logger = bindRequest(req);
+    }
+    if (opts.assignCorrelationId) {
+      module.exports.assignCorrelationId(req);
+    }
     const startTime = Date.now();
     onFinished(res, () => {
       const path = url.parse(req.originalUrl).pathname;
@@ -213,4 +219,28 @@ function initAccessLog(opts) {
     });
     next();
   };
+}
+
+/**
+ * create a new logger object which already has
+ * a req-parameter preset for all methods expecting it
+ * (naive curring)
+ */
+function bindRequest(req) {
+  return [
+    'getCorrelationId',
+    'assignCorrelationId',
+    'makeEntry',
+    'info',
+    'error',
+    'debug',
+    'warn',
+    'infoSource'
+  ].reduce(
+    (logger, methodName) => {
+      logger[methodName] = (...args) => module.exports[methodName](req, ...args);
+      return logger;
+    },
+    {}
+  );
 }

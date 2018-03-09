@@ -119,12 +119,15 @@ app.get('/', (req, res) => {
 Options:
   * **useJsonTransformer** - replace default **textTransformer** with **jsonTransformer** function
   * **maxMessageLength** - override default `maxMessageLength=8000` for **jsonTransformer**
+  * **injectIntoReq** - automatically create **req.logger** bound to the request
+  * **assignCorrelationId** - automatically assign a new **correlationId**, if none was provided in headers
 
 ```javascript
 // init access log and replace transformEntry
 // so that it produces JSON when in production environment
 app.use(logger.initAccessLog({
-  useJsonTransformer: process.env.NODE_ENV === 'production'
+  useJsonTransformer: process.env.NODE_ENV === 'production',
+  assignCorrelationId: true
 }));
 ```
 

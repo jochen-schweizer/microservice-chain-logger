@@ -7,11 +7,12 @@ const uuid = require('uuid');
 const stackReg = /at\s+.*\s+\((.*):(\d*):(\d*)\)$/i;
 const stackRegNoFunction = /at\s+(.*):(\d*):(\d*)$/i;
 
+// Core logging functions
 const loggingFunctions = {
   info: console.info,
-  error: console.error,
+  debug: console.info,
   warn: console.warn,
-  debug: console.debug
+  error: console.error
 };
 
 module.exports = {
@@ -67,6 +68,10 @@ function textTransformer(func, entry) {
   return result;
 }
 
+/**
+ * @param {Object} req - express Request
+ * @return {String} - value of x-correlation-id
+ */
 function getCorrelationId(req) {
   if (!req || !req.headers) {
     throw new Error('req.headers missing while trying to read correlationId');
@@ -83,12 +88,12 @@ function getCorrelationId(req) {
 function assignCorrelationId(req, opts) {
   // if opts is a string, then it's probably an URI for request('http://example.com', ...)
   if (typeof opts === 'string') {
-    opts = {uri : opts};
+    opts = {uri: opts};
   }
   if (!req || !req.headers) {
     throw new Error('req.headers missing. Calling assignCorrelationId on not an express Request?');
   }
-  const correlationId =  getCorrelationId(req);
+  const correlationId = getCorrelationId(req);
   if (opts !== undefined) {
     if (!opts) {
       throw new Error('trying to assign correlationId to empty opts');
@@ -170,7 +175,7 @@ function applyLogFunction(func, entry) {
   }
 }
 
-function getOutput (func, req, ...messages) {
+function getOutput(func, req, ...messages) {
   const output = makeOutputObject(req, ...messages);
   module.exports.applyLogFunction(func, output);
 }
@@ -184,19 +189,19 @@ function infoSource(req, ...messages) {
   module.exports.applyLogFunction(getLoggingFunction('info'), output);
 }
 
-function info (req, ...messages) {
+function info(req, ...messages) {
   getOutput(getLoggingFunction('info'), req, ...messages);
 }
 
-function error (req, ...messages) {
+function error(req, ...messages) {
   getOutput(getLoggingFunction('error'), req, ...messages);
 }
 
-function debug (req, ...messages) {
+function debug(req, ...messages) {
   getOutput(getLoggingFunction('info'), req, ...messages);
 }
 
-function warn (req, ...messages) {
+function warn(req, ...messages) {
   getOutput(getLoggingFunction('warn'), req, ...messages);
 }
 
@@ -209,7 +214,7 @@ function initAccessLog(opts) {
   if (opts.useJsonTransformer) {
     module.exports.transformEntry = module.exports.jsonTransformer;
   }
-  return function(req, res, next) {
+  return function (req, res, next) {
     if (opts.injectIntoReq) {
       req.logger = bindRequest(req);
     }
@@ -254,10 +259,17 @@ function bindRequest(req) {
   );
 }
 
+/**
+ * @param {String} functionName - name of the logging function to retrieve
+ * @returns {Function} - logging function
+ */
 function getLoggingFunction(functionName) {
   return loggingFunctions[functionName] || function () { };
 }
 
+/**
+ * @param {Object} newLoggingFunctions - consist of {info, warn, error, debug} functions
+ */
 function setLoggingFunctions(newLoggingFunctions) {
   if (newLoggingFunctions.info) {
     loggingFunctions.info = newLoggingFunctions.info;

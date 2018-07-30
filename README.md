@@ -93,6 +93,20 @@ the code location where it was called
 logger.infoSource('reached this point!');
 ```
 
+### logger.setLoggingFunctions(newLoggingFunctions)
+* **newLoggingFunctions** - `Object` consist of {info, warn, error, debug} attributes, where each of them are functions.
+
+This function can be used to override default core logging functions (default core logging functions are console.info, console.debug, console.warn & console.error).
+
+```javascript
+// will override default core logging functions with blank functions.
+logger.setLoggingFunctions({
+  info: () => {},
+  warn: () => {},
+  error: () => {}
+});
+```
+
 ### logger.initAccessLog(opts)
 
 * **opts** - `Object` or `undefined`

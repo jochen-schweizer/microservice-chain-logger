@@ -29,6 +29,7 @@
     "express": "^4.14.0",
     "istanbul": "^0.4.5",
     "jasme": "^5.2.0",
+    "request-promise": "^4.2.2",
     "rewire": "^2.5.2",
     "supertest": "^2.0.1"
   },

@@ -7,8 +7,18 @@ const uuid = require('uuid');
 const stackReg = /at\s+.*\s+\((.*):(\d*):(\d*)\)$/i;
 const stackRegNoFunction = /at\s+(.*):(\d*):(\d*)$/i;
 
+// Core logging functions
+const loggingFunctions = {
+  info: console.info,
+  debug: console.info,
+  warn: console.warn,
+  error: console.error
+};
+
 module.exports = {
   maxMessageLength: 8000,
+
+  setLoggingFunctions,
 
   getCorrelationId,
   assignCorrelationId,
@@ -39,7 +49,7 @@ function jsonTransformer(func, entry) {
 
 function textTransformer(func, entry) {
   let result = entry.processTime;
-  if (func === console.error) {
+  if (func === getLoggingFunction('error')) {
     result += ' ERR:';
   }
   result += ' ' + entry.message;
@@ -58,6 +68,10 @@ function textTransformer(func, entry) {
   return result;
 }
 
+/**
+ * @param {Object} req - express Request
+ * @return {String} - value of x-correlation-id
+ */
 function getCorrelationId(req) {
   if (!req || !req.headers) {
     throw new Error('req.headers missing while trying to read correlationId');
@@ -74,12 +88,12 @@ function getCorrelationId(req) {
 function assignCorrelationId(req, opts) {
   // if opts is a string, then it's probably an URI for request('http://example.com', ...)
   if (typeof opts === 'string') {
-    opts = {uri : opts};
+    opts = {uri: opts};
   }
   if (!req || !req.headers) {
     throw new Error('req.headers missing. Calling assignCorrelationId on not an express Request?');
   }
-  const correlationId =  getCorrelationId(req);
+  const correlationId = getCorrelationId(req);
   if (opts !== undefined) {
     if (!opts) {
       throw new Error('trying to assign correlationId to empty opts');
@@ -161,7 +175,7 @@ function applyLogFunction(func, entry) {
   }
 }
 
-function getOutput (func, req, ...messages) {
+function getOutput(func, req, ...messages) {
   const output = makeOutputObject(req, ...messages);
   module.exports.applyLogFunction(func, output);
 }
@@ -172,23 +186,23 @@ function getOutput (func, req, ...messages) {
 function infoSource(req, ...messages) {
   const output = makeOutputObject(req, ...messages);
   Object.assign(output, getCodeAnchor());
-  module.exports.applyLogFunction(console.info, output);
+  module.exports.applyLogFunction(getLoggingFunction('info'), output);
 }
 
-function info (req, ...messages) {
-  getOutput(console.info, req, ...messages);
+function info(req, ...messages) {
+  getOutput(getLoggingFunction('info'), req, ...messages);
 }
 
-function error (req, ...messages) {
-  getOutput(console.error, req, ...messages);
+function error(req, ...messages) {
+  getOutput(getLoggingFunction('error'), req, ...messages);
 }
 
-function debug (req, ...messages) {
-  getOutput(console.info, req, ...messages);
+function debug(req, ...messages) {
+  getOutput(getLoggingFunction('info'), req, ...messages);
 }
 
-function warn (req, ...messages) {
-  getOutput(console.warn, req, ...messages);
+function warn(req, ...messages) {
+  getOutput(getLoggingFunction('warn'), req, ...messages);
 }
 
 function initAccessLog(opts) {
@@ -200,7 +214,7 @@ function initAccessLog(opts) {
   if (opts.useJsonTransformer) {
     module.exports.transformEntry = module.exports.jsonTransformer;
   }
-  return function(req, res, next) {
+  return function (req, res, next) {
     if (opts.injectIntoReq) {
       req.logger = bindRequest(req);
     }
@@ -215,7 +229,7 @@ function initAccessLog(opts) {
       const output = makeOutputObject(req, userName, res.statusCode, req.method, path);
       output.isAccessLog = true;
       output.duration = Math.max(1, Date.now() - startTime);
-      module.exports.applyLogFunction(console.info, output);
+      module.exports.applyLogFunction(getLoggingFunction('info'), output);
     });
     next();
   };
@@ -243,4 +257,33 @@ function bindRequest(req) {
     },
     {}
   );
+}
+
+/**
+ * @param {String} functionName - name of the logging function to retrieve
+ * @returns {Function} - logging function
+ */
+function getLoggingFunction(functionName) {
+  return loggingFunctions[functionName] || function () { };
+}
+
+/**
+ * @param {Object} newLoggingFunctions - consist of {info, warn, error, debug} functions
+ */
+function setLoggingFunctions(newLoggingFunctions) {
+  if (newLoggingFunctions.info) {
+    loggingFunctions.info = newLoggingFunctions.info;
+  }
+
+  if (newLoggingFunctions.warn) {
+    loggingFunctions.warn = newLoggingFunctions.warn;
+  }
+
+  if (newLoggingFunctions.error) {
+    loggingFunctions.error = newLoggingFunctions.error;
+  }
+
+  if (newLoggingFunctions.debug) {
+    loggingFunctions.debug = newLoggingFunctions.debug;
+  }
 }

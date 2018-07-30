@@ -1,12 +1,13 @@
 /* eslint-env jasmine */
-const stub = {
+const rewire = require('rewire');
+const lib = rewire('./index');
+const stub = lib.__get__('loggingFunctions');
+
+lib.setLoggingFunctions({
   info: () => {},
   warn: () => {},
   error: () => {}
-};
-const rewire = require('rewire');
-const lib = rewire('./index');
-lib.__set__('console', stub);
+});
 
 const express = require('express');
 const supertest = require('supertest');

@@ -7,8 +7,17 @@ const uuid = require('uuid');
 const stackReg = /at\s+.*\s+\((.*):(\d*):(\d*)\)$/i;
 const stackRegNoFunction = /at\s+(.*):(\d*):(\d*)$/i;
 
+const loggingFunctions = {
+  info: console.info,
+  error: console.error,
+  warn: console.warn,
+  debug: console.debug
+};
+
 module.exports = {
   maxMessageLength: 8000,
+
+  setLoggingFunctions,
 
   getCorrelationId,
   assignCorrelationId,
@@ -39,7 +48,7 @@ function jsonTransformer(func, entry) {
 
 function textTransformer(func, entry) {
   let result = entry.processTime;
-  if (func === console.error) {
+  if (func === getLoggingFunction('error')) {
     result += ' ERR:';
   }
   result += ' ' + entry.message;
@@ -172,23 +181,23 @@ function getOutput (func, req, ...messages) {
 function infoSource(req, ...messages) {
   const output = makeOutputObject(req, ...messages);
   Object.assign(output, getCodeAnchor());
-  module.exports.applyLogFunction(console.info, output);
+  module.exports.applyLogFunction(getLoggingFunction('info'), output);
 }
 
 function info (req, ...messages) {
-  getOutput(console.info, req, ...messages);
+  getOutput(getLoggingFunction('info'), req, ...messages);
 }
 
 function error (req, ...messages) {
-  getOutput(console.error, req, ...messages);
+  getOutput(getLoggingFunction('error'), req, ...messages);
 }
 
 function debug (req, ...messages) {
-  getOutput(console.info, req, ...messages);
+  getOutput(getLoggingFunction('info'), req, ...messages);
 }
 
 function warn (req, ...messages) {
-  getOutput(console.warn, req, ...messages);
+  getOutput(getLoggingFunction('warn'), req, ...messages);
 }
 
 function initAccessLog(opts) {
@@ -215,7 +224,7 @@ function initAccessLog(opts) {
       const output = makeOutputObject(req, userName, res.statusCode, req.method, path);
       output.isAccessLog = true;
       output.duration = Math.max(1, Date.now() - startTime);
-      module.exports.applyLogFunction(console.info, output);
+      module.exports.applyLogFunction(getLoggingFunction('info'), output);
     });
     next();
   };
@@ -243,4 +252,26 @@ function bindRequest(req) {
     },
     {}
   );
+}
+
+function getLoggingFunction(functionName) {
+  return loggingFunctions[functionName] || function () { };
+}
+
+function setLoggingFunctions(newLoggingFunctions) {
+  if (newLoggingFunctions.info) {
+    loggingFunctions.info = newLoggingFunctions.info;
+  }
+
+  if (newLoggingFunctions.warn) {
+    loggingFunctions.warn = newLoggingFunctions.warn;
+  }
+
+  if (newLoggingFunctions.error) {
+    loggingFunctions.error = newLoggingFunctions.error;
+  }
+
+  if (newLoggingFunctions.debug) {
+    loggingFunctions.debug = newLoggingFunctions.debug;
+  }
 }

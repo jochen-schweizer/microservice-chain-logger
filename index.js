@@ -19,6 +19,13 @@ module.exports = {
   makeEntry,
   applyLogFunction,
 
+  logFunctions: {
+    info: console.info,
+    error: console.error,
+    debug: console.debug,
+    warn: console.warn
+  },
+
   info,
   error,
   debug,
@@ -39,7 +46,7 @@ function jsonTransformer(func, entry) {
 
 function textTransformer(func, entry) {
   let result = entry.processTime;
-  if (func === console.error) {
+  if (func === module.exports.logFunctions.error) {
     result += ' ERR:';
   }
   result += ' ' + entry.message;
@@ -172,23 +179,23 @@ function getOutput(func, req, ...messages) {
 function infoSource(req, ...messages) {
   const output = makeOutputObject(req, ...messages);
   Object.assign(output, getCodeAnchor());
-  module.exports.applyLogFunction(console.info, output);
+  module.exports.applyLogFunction(module.exports.logFunctions.info, output);
 }
 
 function info(req, ...messages) {
-  getOutput(console.info, req, ...messages);
+  getOutput(module.exports.logFunctions.info, req, ...messages);
 }
 
 function error(req, ...messages) {
-  getOutput(console.error, req, ...messages);
+  getOutput(module.exports.logFunctions.error, req, ...messages);
 }
 
 function debug(req, ...messages) {
-  getOutput(console.info, req, ...messages);
+  getOutput(module.exports.logFunctions.debug, req, ...messages);
 }
 
 function warn(req, ...messages) {
-  getOutput(console.warn, req, ...messages);
+  getOutput(module.exports.logFunctions.warn, req, ...messages);
 }
 
 function initAccessLog(opts) {
@@ -215,7 +222,7 @@ function initAccessLog(opts) {
       const output = makeOutputObject(req, userName, res.statusCode, req.method, path);
       output.isAccessLog = true;
       output.duration = Math.max(1, Date.now() - startTime);
-      module.exports.applyLogFunction(console.info, output);
+      module.exports.applyLogFunction(module.exports.logFunctions.info, output);
     });
     next();
   };

@@ -188,6 +188,24 @@ app.get('/', (req, res, next) => {
 For the most of the cases you should be fine with the functions above,
 but feel free to hack the library at your on risk.
 
+### logger.logFunctions property
+
+**logger.logFunctions** is an object consisting of `{info, warn, error, debug}`
+
+These functions can be used to override default core logging functions
+(default core logging functions are `console.info`,
+`console.debug`, `console.warn` and `console.error`).
+
+You can either replace single functions, e.g.;
+
+```js
+logger.logFunctions.error = (error) => { /* ... send email ... */ };
+```
+
+... or replace the entire **logger.logFunctions** object.
+
+[see an example](https://github.com/jochen-schweizer/microservice-chain-logger/blob/master/examples/change-log-functions.js)
+
 ### logger.transformEntry(func, entry)
 
 Params:
@@ -302,10 +320,7 @@ so that you get JSON in production environment only.
 
 ### More examles
 
-See more advanced examples on github:
-
-* [tranformEntry()](https://github.com/jochen-schweizer/microservice-chain-logger/blob/master/examples/transformEntry.js)
-* [correlation id and makeEntry()](https://github.com/jochen-schweizer/microservice-chain-logger/blob/master/examples/correlation.js)
+[...See more advanced examples on github](https://github.com/jochen-schweizer/microservice-chain-logger/tree/master/examples)
 
 ## License
 

@@ -1,6 +1,6 @@
 {
   "name": "microservice-chain-logger",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "JSON logger for microservices with bundled Correlation ID and http-server access logging",
   "main": "index.js",
   "scripts": {
@@ -29,7 +29,6 @@
     "express": "^4.14.0",
     "istanbul": "^0.4.5",
     "jasme": "^5.2.0",
-    "rewire": "^2.5.2",
     "supertest": "^2.0.1"
   },
   "repository": {

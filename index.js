@@ -161,7 +161,7 @@ function applyLogFunction(func, entry) {
   }
 }
 
-function getOutput (func, req, ...messages) {
+function getOutput(func, req, ...messages) {
   const output = makeOutputObject(req, ...messages);
   module.exports.applyLogFunction(func, output);
 }
@@ -175,19 +175,19 @@ function infoSource(req, ...messages) {
   module.exports.applyLogFunction(console.info, output);
 }
 
-function info (req, ...messages) {
+function info(req, ...messages) {
   getOutput(console.info, req, ...messages);
 }
 
-function error (req, ...messages) {
+function error(req, ...messages) {
   getOutput(console.error, req, ...messages);
 }
 
-function debug (req, ...messages) {
+function debug(req, ...messages) {
   getOutput(console.info, req, ...messages);
 }
 
-function warn (req, ...messages) {
+function warn(req, ...messages) {
   getOutput(console.warn, req, ...messages);
 }
 
